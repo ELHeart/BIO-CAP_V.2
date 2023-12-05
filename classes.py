@@ -1,17 +1,18 @@
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QLineEdit, QMessageBox, QDialog,
-    QHBoxLayout, QFormLayout, QMenuBar, QAction, QSplashScreen
+    QHBoxLayout, QFormLayout, QMenuBar, QFileDialog, QAction, QSplashScreen
 )
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import (Qt, QTimer)
 from oauth2client.service_account import ServiceAccountCredentials
-import gspread, socket, bcrypt, sys, os
-
+from googleapiclient.errors import HttpError
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
 from functions import (resource_path, is_internet_available, init_google_sheets_api, add_user, find_user,
                        encrypt_password, check_password)
+import gspread, socket, bcrypt, sys, os
 
 
-# SplashScreen class
 class SplashScreen(QSplashScreen):
     def __init__(self, pixmap, timeout):
         super().__init__(pixmap)
@@ -212,11 +213,20 @@ class ConfirmDialog(QDialog):
 class BioDataApp(QWidget):
     def __init__(self):
         super().__init__()
+        self.uploaded_image_link = None
         self.age = QLineEdit()
         self.lastName = QLineEdit()
         self.middleName = QLineEdit()
         self.firstName = QLineEdit()
+        # Inside the BioDataApp class
+
+        self.pictureLabel = QLabel("No picture selected.")
+        self.pictureButton = QPushButton("Upload Picture")
+        self.pictureButton.clicked.connect(self.upload_picture)
+
         self.init_ui()
+        self.sheet, self.creds = init_google_sheets_api('Bio-Data')
+        # Now self.creds can be used to access Google Drive API
 
     def init_ui(self):
         self.setWindowTitle('Bio-Data Collection Application')  # Set the window title
@@ -237,6 +247,9 @@ class BioDataApp(QWidget):
         form_layout.addRow("Middle Name (Skip if none):", self.middleName)
         form_layout.addRow("Last Name:", self.lastName)
         form_layout.addRow("Age:", self.age)
+        # Inside the init_ui method of the BioDataApp class
+        form_layout.addRow("Picture:", self.pictureLabel)
+        form_layout.addRow("", self.pictureButton)
 
         # Submit button
         submitButton = QPushButton("Submit")
@@ -246,6 +259,63 @@ class BioDataApp(QWidget):
         main_layout.addLayout(form_layout)
         main_layout.addWidget(submitButton, alignment=Qt.AlignCenter)
         self.setLayout(main_layout)
+
+    def upload_image_to_drive(self, file_path):
+        try:
+            drive_service = build('drive', 'v3', credentials=self.creds)
+            file_metadata = {'name': os.path.basename(file_path)}
+            media = MediaFileUpload(file_path, mimetype='image/jpeg', resumable=True)
+
+            # Initiate the upload and get an upload object
+            upload_request = drive_service.files().create(body=file_metadata, media_body=media, fields='id')
+
+            response = None
+            while response is None:
+                try:
+                    status, response = upload_request.next_chunk()
+                    if status:
+                        print("Uploaded %d%%." % int(status.progress() * 100))
+                except HttpError as error:
+                    if error.resp.status in [404]:
+                        # Start the upload all over again.
+                        print("Error 404 during upload, starting over.")
+                        upload_request = drive_service.files().create(body=file_metadata, media_body=media,
+                                                                      fields='id')
+                    elif error.resp.status in [500, 502, 503, 504]:
+                        # Call next_chunk() again, but use an exponential backoff for repeated errors.
+                        print("Server error occurred, will retry.")
+                        continue
+                    else:
+                        # Some other error occurred, handle it here.
+                        raise
+                except socket.timeout:
+                    # Handle the read timeout, retry the upload.
+                    print("Read timeout occurred, will retry.")
+                    continue
+
+            if response is not None:
+                # The file has been uploaded successfully, set permissions and get the file link.
+                drive_service.permissions().create(fileId=response.get('id'),
+                                                   body={"type": "anyone", "role": "reader"}).execute()
+                file_link = f"https://drive.google.com/uc?id={response.get('id')}"
+                return file_link
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None
+
+    # Inside the BioDataApp class
+    def upload_picture(self):
+        file_name, _ = QFileDialog.getOpenFileName(self, "Select Picture", "", "Image Files (*.png *.jpg *.jpeg *.bmp)")
+        if file_name:
+            # Upload the image and get the shareable link
+            file_link = self.upload_image_to_drive(file_name)
+            # Set the file link to the label to display it (or store it in an instance variable)
+            self.pictureLabel.setText(file_link)
+            # Load the image and set it as a thumbnail
+            pixmap = QPixmap(file_name)
+            self.pictureLabel.setPixmap(pixmap.scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            # Store the file link in an instance variable for later use
+            self.uploaded_image_link = file_link
 
     # Function checks data type for age entry and brings up data confirmation dialog box
     def confirm_dialog(self):
@@ -266,10 +336,11 @@ class BioDataApp(QWidget):
         first_name = self.firstName.text()
         middle_name = self.middleName.text()
         last_name = self.lastName.text()
+        # Include the image link in the data to be submitted
+        image_link = self.uploaded_image_link
 
         # Write data to Google Sheets
-        sheet = init_google_sheets_api('Bio-Data')
-        sheet.append_row([first_name, middle_name, last_name, age])
+        self.sheet.append_row([first_name, middle_name, last_name, age, image_link])
 
         # Show a SUCCESS message box when data is submitted
         QMessageBox.information(self, "Success", "Data submitted successfully!")
@@ -279,3 +350,6 @@ class BioDataApp(QWidget):
         self.middleName.clear()
         self.lastName.clear()
         self.age.clear()
+        # Clear the image link
+        self.uploaded_image_link = None
+        self.pictureLabel.setText("No picture selected.")

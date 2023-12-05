@@ -1,12 +1,14 @@
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QLineEdit, QMessageBox, QDialog,
-    QHBoxLayout, QFormLayout, QMenuBar, QAction, QSplashScreen
+    QHBoxLayout, QFormLayout, QMenuBar, QFileDialog, QAction, QSplashScreen
 )
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import (Qt, QTimer)
 from oauth2client.service_account import ServiceAccountCredentials
+from googleapiclient.errors import HttpError
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
 import gspread, socket, bcrypt, sys, os
-
 
 # Function to determine the resource path
 def resource_path(relative_path):
@@ -37,7 +39,7 @@ def init_google_sheets_api(sheet_name):
     creds = ServiceAccountCredentials.from_json_keyfile_name(creds_path, scope)
     client = gspread.authorize(creds)
     sheet = client.open(sheet_name).sheet1
-    return sheet
+    return sheet, creds
 
 
 # Function to hash a password
@@ -53,7 +55,7 @@ def check_password(hashed_password, user_password):
 
 # Function to find a user login data in the Google Sheet
 def find_user(username, user_password):
-    sheet = init_google_sheets_api('Credentials')
+    sheet, creds = init_google_sheets_api('Credentials')
     if sheet is None:
         return False
     users = sheet.get_all_records()
@@ -67,7 +69,7 @@ def find_user(username, user_password):
 
 # Function to add a new user login data to the Google Sheet
 def add_user(username, hashed_password):
-    sheet = init_google_sheets_api('Credentials')
+    sheet, creds = init_google_sheets_api('Credentials')
     if sheet is not None:
         # Decode the hashed password to a UTF-8 string before appending
         sheet.append_row([username, hashed_password.decode('utf-8')])
