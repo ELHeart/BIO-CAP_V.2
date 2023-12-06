@@ -5,12 +5,9 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import (Qt, QTimer)
 from oauth2client.service_account import ServiceAccountCredentials
-from googleapiclient.errors import HttpError
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
 from functions import (resource_path, is_internet_available, init_google_sheets_api, add_user, find_user,
                        encrypt_password, check_password)
-import gspread, socket, bcrypt, sys, os
+import gspread, socket, bcrypt, sys, os, json, requests
 
 
 class SplashScreen(QSplashScreen):
@@ -260,46 +257,55 @@ class BioDataApp(QWidget):
         main_layout.addWidget(submitButton, alignment=Qt.AlignCenter)
         self.setLayout(main_layout)
 
+    # Function to get the access token from Google OAuth 2.0
+    def get_access_token(self):
+        scope = ['https://www.googleapis.com/auth/drive.file']
+        creds_path = resource_path('bio-cap-c9841b6b39e2.json')  # Use resource_path for the JSON file
+        creds = ServiceAccountCredentials.from_json_keyfile_name(creds_path, scope)
+        access_token_info = creds.get_access_token()
+        return access_token_info.access_token
+
     def upload_image_to_drive(self, file_path):
         try:
-            drive_service = build('drive', 'v3', credentials=self.creds)
-            file_metadata = {'name': os.path.basename(file_path)}
-            media = MediaFileUpload(file_path, mimetype='image/jpeg', resumable=True)
+            access_token = self.get_access_token()  # Assuming you have a method to get the access token
+            headers = {
+                "Authorization": "Bearer " + access_token
+            }
+            metadata = {
+                "name": os.path.basename(file_path),
+                # If you have a folder ID stored as an instance attribute
+                "parents": [self.folder_id] if hasattr(self, 'folder_id') else []
+            }
+            # Use a context manager to ensure the file is open during the upload
+            with open(file_path, "rb") as file:
+                files = {
+                    'data': ('metadata', json.dumps(metadata), 'application/json; charset=UTF-8'),
+                    'file': ('file', file)
+                }
+                r = requests.post(
+                    "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
+                    headers=headers,
+                    files=files
+                )
+            r.raise_for_status()
+            file_id = r.json()['id']
 
-            # Initiate the upload and get an upload object
-            upload_request = drive_service.files().create(body=file_metadata, media_body=media, fields='id')
+            # Set the file to be publicly accessible
+            permission = {
+                'type': 'anyone',
+                'role': 'reader',
+            }
+            r = requests.post(
+                f"https://www.googleapis.com/drive/v3/files/{file_id}/permissions",
+                headers=headers,
+                data=json.dumps(permission)
+            )
+            r.raise_for_status()
 
-            response = None
-            while response is None:
-                try:
-                    status, response = upload_request.next_chunk()
-                    if status:
-                        print("Uploaded %d%%." % int(status.progress() * 100))
-                except HttpError as error:
-                    if error.resp.status in [404]:
-                        # Start the upload all over again.
-                        print("Error 404 during upload, starting over.")
-                        upload_request = drive_service.files().create(body=file_metadata, media_body=media,
-                                                                      fields='id')
-                    elif error.resp.status in [500, 502, 503, 504]:
-                        # Call next_chunk() again, but use an exponential backoff for repeated errors.
-                        print("Server error occurred, will retry.")
-                        continue
-                    else:
-                        # Some other error occurred, handle it here.
-                        raise
-                except socket.timeout:
-                    # Handle the read timeout, retry the upload.
-                    print("Read timeout occurred, will retry.")
-                    continue
-
-            if response is not None:
-                # The file has been uploaded successfully, set permissions and get the file link.
-                drive_service.permissions().create(fileId=response.get('id'),
-                                                   body={"type": "anyone", "role": "reader"}).execute()
-                file_link = f"https://drive.google.com/uc?id={response.get('id')}"
-                return file_link
-        except Exception as e:
+            # Return the web view link
+            file_link = f"https://drive.google.com/uc?id={file_id}"
+            return file_link
+        except requests.exceptions.RequestException as e:
             print(f"An error occurred: {e}")
             return None
 
@@ -308,6 +314,7 @@ class BioDataApp(QWidget):
         file_name, _ = QFileDialog.getOpenFileName(self, "Select Picture", "", "Image Files (*.png *.jpg *.jpeg *.bmp)")
         if file_name:
             # Upload the image and get the shareable link
+            # noinspection PyArgumentList
             file_link = self.upload_image_to_drive(file_name)
             # Set the file link to the label to display it (or store it in an instance variable)
             self.pictureLabel.setText(file_link)

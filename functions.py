@@ -5,10 +5,8 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import (Qt, QTimer)
 from oauth2client.service_account import ServiceAccountCredentials
-from googleapiclient.errors import HttpError
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
-import gspread, socket, bcrypt, sys, os
+import gspread, socket, bcrypt, sys, os, json, requests
+
 
 # Function to determine the resource path
 def resource_path(relative_path):

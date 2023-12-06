@@ -5,12 +5,10 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import (Qt, QTimer)
 from oauth2client.service_account import ServiceAccountCredentials
-import gspread, socket, bcrypt, sys, os
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
 from classes import (SignUpDialog, BioDataApp, ConnectionErrorDialog, ConfirmDialog, LoginDialog, SplashScreen)
 from functions import (resource_path, is_internet_available, init_google_sheets_api, add_user, find_user,
                        encrypt_password, check_password)
+import gspread, socket, bcrypt, sys, os, json, requests
 
 
 if __name__ == '__main__':
