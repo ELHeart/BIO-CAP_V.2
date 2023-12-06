@@ -1,0 +1,28 @@
+Bio-Cap Software User License Agreement
+
+This Software User License Agreement (the "Agreement") is a legal agreement between you (either an individual or a single entity) and Bio-Cap ("the Author") for the Bio-Cap software product, which includes computer software (the "Software"), and may include associated media, printed materials, and online or electronic documentation.
+
+By installing, copying, or otherwise using the Software, you agree to be bound by the terms of this Agreement. If you do not agree to the terms of this Agreement, do not install or use the Software.
+
+Grant of License: The Author grants you a non-exclusive, non-transferable license to use the Software for personal, commercial, or educational purposes under the terms of this Agreement.
+
+Installation and Use: You may install and use an unlimited number of copies of the Software on your devices.
+
+Reproduction and Distribution: You may not reproduce or distribute the Software without the express written consent of the Author.
+
+Limitations:
+
+You may not reverse engineer, decompile, or disassemble the Software, except and only to the extent that such activity is expressly permitted by applicable law notwithstanding this limitation.
+You may not rent, lease, or lend the Software.
+You may not use the Software for any purpose that is illegal or prohibited by law.
+Intellectual Property Rights: The Software is the intellectual property of the Author and is protected by copyright law and international copyright treaty provisions. The Author retains all rights not expressly granted.
+
+Termination: Without prejudice to any other rights, the Author may terminate this Agreement if you fail to comply with the terms and conditions of this Agreement. In such event, you must destroy all copies of the Software and all of its component parts.
+
+Warranty: The Software is provided "as is" without warranty of any kind, either express or implied, including, but not limited to, the implied warranties of merchantability and fitness for a particular purpose.
+
+Limitation of Liability: In no event shall the Author be liable for any damages whatsoever (including, without limitation, damages for loss of business profits, business interruption, loss of business information, or any other pecuniary loss) arising out of the use of or inability to use this Software, even if the Author has been advised of the possibility of such damages.
+
+Governing Law: This Agreement shall be governed by the laws of the jurisdiction in which the Author resides.
+
+By clicking "I Agree" or by installing, copying, or otherwise using the Software, you acknowledge that you have read this Agreement, understand it, and agree to be bound by its terms and conditions.
