@@ -1,9 +1,9 @@
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QLineEdit, QMessageBox, QDialog,
-    QHBoxLayout, QFormLayout, QMenuBar, QFileDialog, QAction, QSplashScreen
+    QHBoxLayout, QStackedWidget, QMainWindow, QFileDialog, QFormLayout, QMenuBar, QAction, QSplashScreen
 )
 from PyQt5.QtGui import QIcon, QPixmap
-from PyQt5.QtCore import (Qt, QTimer)
+from PyQt5.QtCore import (Qt, QTimer, pyqtSignal)
 from oauth2client.service_account import ServiceAccountCredentials
 from functions import (resource_path, is_internet_available, init_google_sheets_api, add_user, find_user,
                        encrypt_password, check_password)
@@ -15,6 +15,7 @@ class SplashScreen(QSplashScreen):
         super().__init__(pixmap)
         self.timeout = timeout
 
+    # Function displays splash screen
     def show_splash_screen(self):
         self.show()
         QTimer.singleShot(self.timeout, self.close)
@@ -37,6 +38,7 @@ class ConnectionErrorDialog(QDialog):
 
         self.setLayout(layout)
 
+    # Function to retry internet connectivity check
     def retry_connection(self):
         if is_internet_available():
             self.accept()  # Close the dialog if the internet is available
@@ -45,8 +47,8 @@ class ConnectionErrorDialog(QDialog):
                                                           "network settings again.")
 
 
-# SignUpDialog class creates a sign-up dialog box
-class SignUpDialog(QDialog):
+# Sign Up widget and form
+class SignUpWidget(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Sign Up')
@@ -54,7 +56,6 @@ class SignUpDialog(QDialog):
         self.setStyleSheet(
             "QDialog { background-color: #f2f2f2; } QPushButton { background-color: #4CAF50; color: white; } "
             "QLineEdit { padding: 5px; } QLabel { font-weight: bold; }")
-        self.setModal(True)
 
         layout = QVBoxLayout()
 
@@ -75,48 +76,9 @@ class SignUpDialog(QDialog):
         signup_button.clicked.connect(self.register_user)
         layout.addWidget(signup_button)
 
-        # Button to switch to the Sign In window
-        signin_button = QPushButton("Sign In")
-        signin_button.clicked.connect(self.switch_to_signin)
-        layout.addWidget(signin_button)
-
         self.setLayout(layout)
 
-    def init_ui(self):
-        self.setWindowTitle('Sign Up')
-        # Set the window icon
-        self.setModal(True)
-
-        form_layout = QFormLayout()
-
-        # Username and password entry points.
-        self.username = QLineEdit()
-        self.username.setPlaceholderText("Enter username")
-        self.password = QLineEdit()
-        self.password.setPlaceholderText("Enter password")
-        self.password.setEchoMode(QLineEdit.Password)
-
-        form_layout.addRow("Username:", self.username)
-        form_layout.addRow("Password:", self.password)
-
-        # Sign up and Sign in buttons
-        buttons_layout = QHBoxLayout()
-        signup_button = QPushButton("Sign Up")
-        signup_button.clicked.connect(self.register_user)
-        buttons_layout.addWidget(signup_button)
-
-        signin_button = QPushButton("Sign In")
-        signin_button.clicked.connect(self.switch_to_signin)
-        buttons_layout.addWidget(signin_button)
-
-        main_layout = QVBoxLayout()
-        main_layout.addLayout(form_layout)
-        main_layout.addLayout(buttons_layout)
-        self.setLayout(main_layout)
-
-    def switch_to_signin(self):
-        self.done(0)  # Close the sign-up dialog with a rejection code 0
-
+    # Function to register user
     def register_user(self):
         username = self.username.text()
         password = self.password.text()
@@ -127,11 +89,14 @@ class SignUpDialog(QDialog):
 
         # Successful data entry alert
         QMessageBox.information(self, "Success", "You have signed up successfully!")
-        self.accept()
+        self.show()
 
 
-# Login Dialog Class
-class LoginDialog(QDialog):
+# Login Widget and form
+class LoginWidget(QWidget):
+    # Login signal
+    login_successful = pyqtSignal()
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Login')
@@ -139,7 +104,6 @@ class LoginDialog(QDialog):
         self.setStyleSheet(
             "QDialog { background-color: #f2f2f2; } QPushButton { background-color: #4CAF50; color: white; } "
             "QLineEdit { padding: 5px; } QLabel { font-weight: bold; }")
-        self.setModal(True)
 
         layout = QVBoxLayout()
 
@@ -155,34 +119,90 @@ class LoginDialog(QDialog):
         layout.addWidget(QLabel("Password:"))
         layout.addWidget(self.password)
 
-        # Login Button creation and credentials check
+        # Login Button creation
         login_button = QPushButton("Login")
         login_button.clicked.connect(self.check_credentials)
         layout.addWidget(login_button)
 
         self.setLayout(layout)
 
-    # Function checks login data from allows rentry
+    # Function for checking credentials
     def check_credentials(self):
         username = self.username.text()
         password = self.password.text()
 
         # Check credentials against Google Sheets
         if find_user(username, password):
-            self.accept()  # Closes the dialog box and continues
+            self.login_successful.emit()  # Emit the signal when login is successful
+            self.hide()  # Hide the login widget
         else:
             QMessageBox.warning(self, "Login Failed", "Invalid username or password. Please try again.")
             self.username.clear()
             self.password.clear()
 
 
-# ConfirmDialog Class
+# Main Window
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.login_button = QPushButton("Log In")
+        self.login_widget = LoginWidget()
+        self.signup_button = QPushButton("Sign Up")
+        self.stacked_widget = QStackedWidget()
+        self.default_widget = QWidget()
+        self.default_image_label = QLabel()
+        self.signup_widget = SignUpWidget()
+        self.setWindowTitle('Welcome')
+        self.setWindowIcon(QIcon(resource_path('cc.ico')))
+        self.init_ui()
+
+    def init_ui(self):
+        # Create the sidebar with buttons
+        sidebar_layout = QVBoxLayout()
+        sidebar_layout.addWidget(self.login_button)
+        sidebar_layout.addWidget(self.signup_button)
+        sidebar_layout.addStretch()
+
+        # Create a widget for the default image
+        default_layout = QVBoxLayout()
+        self.default_image_label.setAlignment(Qt.AlignCenter)
+        default_pixmap = QPixmap(resource_path('cc.ico'))  # Default image
+        self.default_image_label.setPixmap(default_pixmap)
+        default_layout.addWidget(self.default_image_label)
+        self.default_widget.setLayout(default_layout)
+
+        # Add the default image widget to the stacked widget
+        self.stacked_widget.addWidget(self.default_widget)
+
+        # Create the login and signup widgets and add them to the stacked widget
+        self.stacked_widget.addWidget(self.login_widget)
+        self.stacked_widget.addWidget(self.signup_widget)
+
+        # Connect buttons to change the stacked widget index
+        self.login_button.clicked.connect(lambda: self.stacked_widget.setCurrentWidget(self.login_widget))
+        self.signup_button.clicked.connect(lambda: self.stacked_widget.setCurrentWidget(self.signup_widget))
+
+        # Create the main layout
+        main_layout = QHBoxLayout()
+        main_layout.addLayout(sidebar_layout)
+        main_layout.addWidget(self.stacked_widget)
+
+        # Set the central widget
+        central_widget = QWidget()
+        central_widget.setLayout(main_layout)
+        self.setCentralWidget(central_widget)
+
+    # Function to close Main Window
+    def close_window(self):
+        self.close()
+
+
+# Confirm Dialog Box
 class ConfirmDialog(QDialog):
     def __init__(self, parent, first_name, middle_name, last_name, age):
         super().__init__(parent)
         self.setWindowTitle('Confirm Data')
-        self.setWindowIcon(QIcon(resource_path('cc.ico')))  # Use resource_path for the icon
-        # Set the window icon
+        self.setWindowIcon(QIcon(resource_path('cc.ico')))  # Setting icon using resource_path
 
         layout = QVBoxLayout()
 
@@ -206,7 +226,7 @@ class ConfirmDialog(QDialog):
         self.setLayout(layout)
 
 
-# BioDataApp Class
+# Bio-data Entry Form
 class BioDataApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -215,7 +235,6 @@ class BioDataApp(QWidget):
         self.lastName = QLineEdit()
         self.middleName = QLineEdit()
         self.firstName = QLineEdit()
-        # Inside the BioDataApp class
 
         self.pictureLabel = QLabel("No picture selected.")
         self.pictureButton = QPushButton("Upload Picture")
@@ -223,11 +242,10 @@ class BioDataApp(QWidget):
 
         self.init_ui()
         self.sheet, self.creds = init_google_sheets_api('Bio-Data')
-        # Now self.creds can be used to access Google Drive API
 
     def init_ui(self):
         self.setWindowTitle('Bio-Data Collection Application')  # Set the window title
-        # Set the window icon
+        self.setWindowIcon(QIcon(resource_path('cc.ico')))  # Setting icon using resource_path
         self.setStyleSheet("QWidget { background-color: #f2f2f2; } QPushButton { background-color: #4CAF50; color:"
                            " white; } QLineEdit { padding: 5px; } QLabel { font-weight: bold; }")  # Stylesheet for the
         # window
@@ -244,7 +262,6 @@ class BioDataApp(QWidget):
         form_layout.addRow("Middle Name (Skip if none):", self.middleName)
         form_layout.addRow("Last Name:", self.lastName)
         form_layout.addRow("Age:", self.age)
-        # Inside the init_ui method of the BioDataApp class
         form_layout.addRow("Picture:", self.pictureLabel)
         form_layout.addRow("", self.pictureButton)
 
@@ -265,9 +282,10 @@ class BioDataApp(QWidget):
         access_token_info = creds.get_access_token()
         return access_token_info.access_token
 
+    # Function to upload image to drive
     def upload_image_to_drive(self, file_path):
         try:
-            access_token = self.get_access_token()  # Assuming you have a method to get the access token
+            access_token = self.get_access_token()
             headers = {
                 "Authorization": "Bearer " + access_token
             }
@@ -276,7 +294,6 @@ class BioDataApp(QWidget):
                 # If you have a folder ID stored as an instance attribute
                 "parents": [self.folder_id] if hasattr(self, 'folder_id') else []
             }
-            # Use a context manager to ensure the file is open during the upload
             with open(file_path, "rb") as file:
                 files = {
                     'data': ('metadata', json.dumps(metadata), 'application/json; charset=UTF-8'),
@@ -290,7 +307,6 @@ class BioDataApp(QWidget):
             r.raise_for_status()
             file_id = r.json()['id']
 
-            # Set the file to be publicly accessible
             permission = {
                 'type': 'anyone',
                 'role': 'reader',
@@ -302,26 +318,25 @@ class BioDataApp(QWidget):
             )
             r.raise_for_status()
 
-            # Return the web view link
+            # Returns the web view link
             file_link = f"https://drive.google.com/uc?id={file_id}"
             return file_link
         except requests.exceptions.RequestException as e:
             print(f"An error occurred: {e}")
             return None
 
-    # Inside the BioDataApp class
+    # Function to upload image to form
+    # Uploads the image and gets the shareable link
     def upload_picture(self):
         file_name, _ = QFileDialog.getOpenFileName(self, "Select Picture", "", "Image Files (*.png *.jpg *.jpeg *.bmp)")
         if file_name:
-            # Upload the image and get the shareable link
             # noinspection PyArgumentList
             file_link = self.upload_image_to_drive(file_name)
-            # Set the file link to the label to display it (or store it in an instance variable)
             self.pictureLabel.setText(file_link)
-            # Load the image and set it as a thumbnail
+
+            # Loads the image and sets it as a thumbnail in the form
             pixmap = QPixmap(file_name)
             self.pictureLabel.setPixmap(pixmap.scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation))
-            # Store the file link in an instance variable for later use
             self.uploaded_image_link = file_link
 
     # Function checks data type for age entry and brings up data confirmation dialog box
@@ -343,7 +358,6 @@ class BioDataApp(QWidget):
         first_name = self.firstName.text()
         middle_name = self.middleName.text()
         last_name = self.lastName.text()
-        # Include the image link in the data to be submitted
         image_link = self.uploaded_image_link
 
         # Write data to Google Sheets
@@ -357,6 +371,5 @@ class BioDataApp(QWidget):
         self.middleName.clear()
         self.lastName.clear()
         self.age.clear()
-        # Clear the image link
         self.uploaded_image_link = None
         self.pictureLabel.setText("No picture selected.")
