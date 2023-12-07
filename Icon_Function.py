@@ -20,4 +20,5 @@ def convert_image_to_icon(image_path, icon_path, icon_sizes=(16, 32, 48, 64, 128
 
 
 # Example usage:
-convert_image_to_icon(r'C:\Users\el_he\Desktop\BIO-CAP_V.2\ICON.jpg', r'C:\Users\el_he\Desktop\BIO-CAP_V.2\ICON.ico')
+convert_image_to_icon(r'C:\Users\el_he\Desktop\BIO-CAP_V.2\BIOCAP.png',
+                      r'C:\Users\el_he\Desktop\BIO-CAP_V.2\BIOCAP.ico')

@@ -14,7 +14,7 @@ import gspread, socket, bcrypt, sys, os, json, requests
 
 if __name__ == '__main__':
     app = QApplication([])
-    app.setWindowIcon(QIcon(resource_path('cc.ico')))
+    app.setWindowIcon(QIcon(resource_path('BIOCAP.ico')))
 
     splash_image_path = resource_path('ICON.jpg')
     splash_image = QPixmap(splash_image_path)
