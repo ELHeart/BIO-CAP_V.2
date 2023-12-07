@@ -16,7 +16,7 @@ if __name__ == '__main__':
     app = QApplication([])
     app.setWindowIcon(QIcon(resource_path('cc.ico')))
 
-    splash_image_path = resource_path('cc.png')
+    splash_image_path = resource_path('ICON.jpg')
     splash_image = QPixmap(splash_image_path)
     splash = SplashScreen(splash_image, 3000)  # 3000 milliseconds = 3 seconds
     splash.show_splash_screen()
@@ -30,7 +30,6 @@ if __name__ == '__main__':
 
     # Show the welcome window
     Main_window = MainWindow()
-    Main_window.show()
 
     # Create the BioDataApp instance but do not show it yet
     bio_data_app = BioDataApp()
@@ -39,5 +38,7 @@ if __name__ == '__main__':
     Main_window.login_widget.login_successful.connect(bio_data_app.show)
     # Also connect the login_successful signal to the close_window method of the WelcomeWindow
     Main_window.login_widget.login_successful.connect(Main_window.close_window)
+    # Connect the finished signal of the splash screen to the function that shows the main window
+    splash.finished.connect(Main_window.show)
 
     sys.exit(app.exec_())

@@ -11,6 +11,8 @@ import gspread, socket, bcrypt, sys, os, json, requests
 
 
 class SplashScreen(QSplashScreen):
+    finished = pyqtSignal()  # Add a signal to indicate when the splash is finished
+
     def __init__(self, pixmap, timeout):
         super().__init__(pixmap)
         self.timeout = timeout
@@ -18,14 +20,18 @@ class SplashScreen(QSplashScreen):
     # Function displays splash screen
     def show_splash_screen(self):
         self.show()
-        QTimer.singleShot(self.timeout, self.close)
+        QTimer.singleShot(self.timeout, self.finish_splash)
+
+    def finish_splash(self):
+        self.close()
+        self.finished.emit()  # Emit the finished signal when the splash screen is closed
 
 
 class ConnectionErrorDialog(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Connection Error')
-        self.setWindowIcon(QIcon(resource_path('cc.ico')))  # Use resource_path for the icon
+        self.setWindowIcon(QIcon(resource_path('ICON.ico')))  # Use resource_path for the icon
         self.setModal(True)
 
         layout = QVBoxLayout()
@@ -153,7 +159,7 @@ class MainWindow(QMainWindow):
         self.default_image_label = QLabel()
         self.signup_widget = SignUpWidget()
         self.setWindowTitle('Welcome')
-        self.setWindowIcon(QIcon(resource_path('cc.ico')))
+        self.setWindowIcon(QIcon(resource_path('ICON.ico')))
         self.init_ui()
 
     def init_ui(self):
@@ -166,7 +172,7 @@ class MainWindow(QMainWindow):
         # Create a widget for the default image
         default_layout = QVBoxLayout()
         self.default_image_label.setAlignment(Qt.AlignCenter)
-        default_pixmap = QPixmap(resource_path('cc.ico'))  # Default image
+        default_pixmap = QPixmap(resource_path('ICON.jpg'))  # Default image
         self.default_image_label.setPixmap(default_pixmap)
         default_layout.addWidget(self.default_image_label)
         self.default_widget.setLayout(default_layout)
@@ -202,7 +208,7 @@ class ConfirmDialog(QDialog):
     def __init__(self, parent, first_name, middle_name, last_name, age):
         super().__init__(parent)
         self.setWindowTitle('Confirm Data')
-        self.setWindowIcon(QIcon(resource_path('cc.ico')))  # Setting icon using resource_path
+        self.setWindowIcon(QIcon(resource_path('ICON.ico')))  # Setting icon using resource_path
 
         layout = QVBoxLayout()
 
@@ -245,7 +251,7 @@ class BioDataApp(QWidget):
 
     def init_ui(self):
         self.setWindowTitle('Bio-Data Collection Application')  # Set the window title
-        self.setWindowIcon(QIcon(resource_path('cc.ico')))  # Setting icon using resource_path
+        self.setWindowIcon(QIcon(resource_path('ICON.ico')))  # Setting icon using resource_path
         self.setStyleSheet("QWidget { background-color: #f2f2f2; } QPushButton { background-color: #4CAF50; color:"
                            " white; } QLineEdit { padding: 5px; } QLabel { font-weight: bold; }")  # Stylesheet for the
         # window
