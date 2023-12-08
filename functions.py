@@ -1,10 +1,38 @@
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QLineEdit, QMessageBox, QDialog,
-    QHBoxLayout, QStackedWidget, QMainWindow, QFileDialog, QFormLayout, QMenuBar, QAction)
+    QHBoxLayout, QStackedWidget, QMainWindow, QFileDialog, QFormLayout, QMenuBar, QAction, QFrame)
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import (Qt, QTimer, pyqtSignal)
 from oauth2client.service_account import ServiceAccountCredentials
-import gspread, socket, bcrypt, sys, os, json, requests
+import gspread
+import socket
+import bcrypt
+import sys
+import os
+import json
+import requests
+
+stylesheet = """
+    QMainWindow, QWidget {
+        background-color: White; /* Main window background color */
+    }
+    QPushButton {
+        background-color: #333;
+        color: white;
+        border-radius: 10px;
+        padding: 10px;
+        border: none; /* Remove border */
+    }
+    QPushButton:hover {
+        background-color: #B2BEB5; /* Hover color same as main window background */
+    }
+    QPushButton:pressed {
+        background-color: #777;
+    }
+    QLabel {
+        color: Black
+    }
+"""
 
 
 # Function to determine the resource path

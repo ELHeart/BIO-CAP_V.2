@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QLineEdit, QMessageBox, QDialog,
-    QHBoxLayout, QStackedWidget, QMainWindow, QFileDialog, QFormLayout, QMenuBar, QAction, QSplashScreen
+    QHBoxLayout, QStackedWidget, QMainWindow, QFileDialog, QFormLayout, QMenuBar, QAction, QSplashScreen, QFrame
 )
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import (Qt, QTimer, pyqtSignal)
@@ -8,17 +8,24 @@ from oauth2client.service_account import ServiceAccountCredentials
 from classes import (SignUpWidget, BioDataApp, ConnectionErrorDialog, ConfirmDialog, LoginWidget, MainWindow,
                      SplashScreen)
 from functions import (resource_path, is_internet_available, init_google_sheets_api, add_user, find_user,
-                       encrypt_password, check_password)
-import gspread, socket, bcrypt, sys, os, json, requests
+                       encrypt_password, check_password, stylesheet)
+import gspread
+import socket
+import bcrypt
+import sys
+import os
+import json
+import requests
 
 
 if __name__ == '__main__':
     app = QApplication([])
     app.setWindowIcon(QIcon(resource_path('BIOCAP.ico')))
+    app.setStyleSheet(stylesheet)
 
     splash_image_path = resource_path('ICON.jpg')
     splash_image = QPixmap(splash_image_path)
-    splash = SplashScreen(splash_image, 1000)  # 1000 milliseconds = 1 second
+    splash = SplashScreen(splash_image, 100)  # 1000 milliseconds = 1 second
     splash.show_splash_screen()
     app.processEvents()  # Ensure the splash screen is displayed properly
 

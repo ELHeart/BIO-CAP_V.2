@@ -1,13 +1,19 @@
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QLineEdit, QMessageBox, QDialog,
-    QHBoxLayout, QStackedWidget, QMainWindow, QFileDialog, QFormLayout, QMenuBar, QAction, QSplashScreen
+    QHBoxLayout, QStackedWidget, QMainWindow, QFileDialog, QFormLayout, QMenuBar, QAction, QSplashScreen, QFrame
 )
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import (Qt, QTimer, pyqtSignal)
 from oauth2client.service_account import ServiceAccountCredentials
 from functions import (resource_path, is_internet_available, init_google_sheets_api, add_user, find_user,
-                       encrypt_password, check_password)
-import gspread, socket, bcrypt, sys, os, json, requests
+                       encrypt_password, check_password, stylesheet)
+import gspread
+import socket
+import bcrypt
+import sys
+import os
+import json
+import requests
 
 
 class SplashScreen(QSplashScreen):
@@ -57,11 +63,6 @@ class ConnectionErrorDialog(QDialog):
 class SignUpWidget(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('Sign Up')
-        # Set the window icon
-        self.setStyleSheet(
-            "QDialog { background-color: #f2f2f2; } QPushButton { background-color: #4CAF50; color: white; } "
-            "QLineEdit { padding: 5px; } QLabel { font-weight: bold; }")
 
         layout = QVBoxLayout()
 
@@ -72,13 +73,14 @@ class SignUpWidget(QWidget):
         self.password.setPlaceholderText("Enter password")
         self.password.setEchoMode(QLineEdit.Password)
 
+        layout.addWidget(QLabel("SIGN UP"), alignment=Qt.AlignCenter)
         layout.addWidget(QLabel("Username:"))
         layout.addWidget(self.username)
         layout.addWidget(QLabel("Password:"))
         layout.addWidget(self.password)
 
         # Sign up button creation
-        signup_button = QPushButton("Sign Up")
+        signup_button = QPushButton("CREATE ACCOUNT")
         signup_button.clicked.connect(self.register_user)
         layout.addWidget(signup_button)
 
@@ -94,7 +96,8 @@ class SignUpWidget(QWidget):
         add_user(username, hashed_password)
 
         # Successful data entry alert
-        QMessageBox.information(self, "Success", "You have signed up successfully!")
+        QMessageBox.information(self, "Success", "You have signed up successfully! "
+                                                 "Kindly login using the login button from the menu bar.")
         self.show()
 
 
@@ -105,11 +108,6 @@ class LoginWidget(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('Login')
-        # Set the window icon
-        self.setStyleSheet(
-            "QDialog { background-color: #f2f2f2; } QPushButton { background-color: #4CAF50; color: white; } "
-            "QLineEdit { padding: 5px; } QLabel { font-weight: bold; }")
 
         layout = QVBoxLayout()
 
@@ -120,13 +118,14 @@ class LoginWidget(QWidget):
         self.password.setPlaceholderText("Enter password")
         self.password.setEchoMode(QLineEdit.Password)
 
+        layout.addWidget(QLabel("LOG IN"), alignment=Qt.AlignCenter)
         layout.addWidget(QLabel("Username:"))
         layout.addWidget(self.username)
         layout.addWidget(QLabel("Password:"))
         layout.addWidget(self.password)
 
         # Login Button creation
-        login_button = QPushButton("Login")
+        login_button = QPushButton("LOG IN")
         login_button.clicked.connect(self.check_credentials)
         layout.addWidget(login_button)
 
@@ -139,6 +138,8 @@ class LoginWidget(QWidget):
 
         # Check credentials against Google Sheets
         if find_user(username, password):
+            # Successful data entry alert
+            QMessageBox.information(self, "Success", "You have logged in successfully!")
             self.login_successful.emit()  # Emit the signal when login is successful
             self.hide()  # Hide the login widget
         else:
@@ -151,52 +152,81 @@ class LoginWidget(QWidget):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.login_button = QPushButton("Log In")
-        self.login_widget = LoginWidget()
-        self.signup_button = QPushButton("Sign Up")
+        self.default_image_label = QLabel()
+        self.login_frame = QFrame()
         self.stacked_widget = QStackedWidget()
         self.default_widget = QWidget()
-        self.default_image_label = QLabel()
+        self.signup_frame = QFrame()
         self.signup_widget = SignUpWidget()
-        self.setWindowTitle('Welcome')
+        self.login_widget = LoginWidget()
+        self.setWindowTitle('BIOCAP')
         self.setWindowIcon(QIcon(resource_path('ICON.ico')))
+
+        # Initialize the widgets and frames
+        self.init_widgets()
         self.init_ui()
 
-    def init_ui(self):
-        # Create the sidebar with buttons
-        sidebar_layout = QVBoxLayout()
-        sidebar_layout.addWidget(self.login_button)
-        sidebar_layout.addWidget(self.signup_button)
-        sidebar_layout.addStretch()
+    def init_widgets(self):
+        # Initialize the login and signup widgets
 
-        # Create a widget for the default image
+        # Initialize the frames for the login and signup widgets
+        self.login_frame.setLayout(QVBoxLayout())
+        self.login_frame.layout().addWidget(self.login_widget)
+
+        self.signup_frame.setLayout(QVBoxLayout())
+        self.signup_frame.layout().addWidget(self.signup_widget)
+
+    def init_ui(self):
+        # Create the menu bar with login and sign up actions
+        menu_bar = self.menuBar()
+        # Apply a stylesheet to the menu bar to change its color
+        menu_bar.setStyleSheet("""
+            QMenuBar {
+                background-color: #FFFEE; /* Menu bar background color */
+                color: black; /* Menu bar text color */
+            }
+            QMenuBar::item {
+                spacing: 3px; /* Spacing between menu items */
+                padding: 2px 10px;
+                background: transparent;
+            }
+            QMenuBar::item:selected { /* when selected using mouse or keyboard */
+                background-color: #BDB7AB; /* Color when a menu item is selected */
+            }
+            QMenuBar::item:pressed {
+                background-color: #B2BEB5; /* Color when a menu item is pressed */
+            }
+        """)
+
+        signup_action = QAction("Sign Up", self)
+        signup_action.triggered.connect(self.show_signup)
+        login_action = QAction("Log In", self)
+        login_action.triggered.connect(self.show_login)
+        menu_bar.addAction(signup_action)
+        menu_bar.addAction(login_action)
+
+        # Create the stacked widget and add the default widget, login frame, and signup frame
         default_layout = QVBoxLayout()
         self.default_image_label.setAlignment(Qt.AlignCenter)
-        default_pixmap = QPixmap(resource_path('ICON.jpg'))  # Default image
-        self.default_image_label.setPixmap(default_pixmap)
+        default_pixmap = QPixmap(resource_path('ICON.jpg'))
+        self.default_image_label.setPixmap(default_pixmap.scaled(150, 150, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         default_layout.addWidget(self.default_image_label)
         self.default_widget.setLayout(default_layout)
-
-        # Add the default image widget to the stacked widget
         self.stacked_widget.addWidget(self.default_widget)
-
-        # Create the login and signup widgets and add them to the stacked widget
-        self.stacked_widget.addWidget(self.login_widget)
-        self.stacked_widget.addWidget(self.signup_widget)
-
-        # Connect buttons to change the stacked widget index
-        self.login_button.clicked.connect(lambda: self.stacked_widget.setCurrentWidget(self.login_widget))
-        self.signup_button.clicked.connect(lambda: self.stacked_widget.setCurrentWidget(self.signup_widget))
-
-        # Create the main layout
-        main_layout = QHBoxLayout()
-        main_layout.addLayout(sidebar_layout)
-        main_layout.addWidget(self.stacked_widget)
+        self.stacked_widget.addWidget(self.login_frame)
+        self.stacked_widget.addWidget(self.signup_frame)
 
         # Set the central widget
         central_widget = QWidget()
-        central_widget.setLayout(main_layout)
+        central_widget.setLayout(QVBoxLayout())
+        central_widget.layout().addWidget(self.stacked_widget)
         self.setCentralWidget(central_widget)
+
+    def show_login(self):
+        self.stacked_widget.setCurrentWidget(self.login_frame)
+
+    def show_signup(self):
+        self.stacked_widget.setCurrentWidget(self.signup_frame)
 
     # Function to close Main Window
     def close_window(self):
@@ -209,7 +239,6 @@ class ConfirmDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle('Confirm Data')
         self.setWindowIcon(QIcon(resource_path('ICON.ico')))  # Setting icon using resource_path
-
         layout = QVBoxLayout()
 
         layout.addWidget(QLabel(f"First Name: {first_name}"))
@@ -230,9 +259,13 @@ class ConfirmDialog(QDialog):
 
         layout.addLayout(button_layout)
         self.setLayout(layout)
+        # Hide the window frame and enable custom window styling
+        self.setWindowFlags(Qt.FramelessWindowHint)  # Hides the window frame
+        self.setAttribute(Qt.WA_TranslucentBackground)  # Enables transparen
 
 
 # Bio-data Entry Form
+# noinspection PyMethodMayBeStatic
 class BioDataApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -241,7 +274,6 @@ class BioDataApp(QWidget):
         self.lastName = QLineEdit()
         self.middleName = QLineEdit()
         self.firstName = QLineEdit()
-
         self.pictureLabel = QLabel("No picture selected.")
         self.pictureButton = QPushButton("Upload Picture")
         self.pictureButton.clicked.connect(self.upload_picture)
@@ -252,9 +284,6 @@ class BioDataApp(QWidget):
     def init_ui(self):
         self.setWindowTitle('Bio-Data Collection Application')  # Set the window title
         self.setWindowIcon(QIcon(resource_path('ICON.ico')))  # Setting icon using resource_path
-        self.setStyleSheet("QWidget { background-color: #f2f2f2; } QPushButton { background-color: #4CAF50; color:"
-                           " white; } QLineEdit { padding: 5px; } QLabel { font-weight: bold; }")  # Stylesheet for the
-        # window
 
         form_layout = QFormLayout()
 
