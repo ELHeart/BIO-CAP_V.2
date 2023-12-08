@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
     splash_image_path = resource_path('ICON.jpg')
     splash_image = QPixmap(splash_image_path)
-    splash = SplashScreen(splash_image, 3000)  # 3000 milliseconds = 3 seconds
+    splash = SplashScreen(splash_image, 1000)  # 1000 milliseconds = 1 second
     splash.show_splash_screen()
     app.processEvents()  # Ensure the splash screen is displayed properly
 
