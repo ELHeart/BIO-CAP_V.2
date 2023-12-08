@@ -96,8 +96,7 @@ class SignUpWidget(QWidget):
         add_user(username, hashed_password)
 
         # Successful data entry alert
-        QMessageBox.information(self, "Success", "You have signed up successfully! "
-                                                 "Kindly login using the login button from the menu bar.")
+        QMessageBox.information(self, "Success", "You have signed up successfully!")
         self.show()
 
 
@@ -260,8 +259,6 @@ class ConfirmDialog(QDialog):
         layout.addLayout(button_layout)
         self.setLayout(layout)
         # Hide the window frame and enable custom window styling
-        self.setWindowFlags(Qt.FramelessWindowHint)  # Hides the window frame
-        self.setAttribute(Qt.WA_TranslucentBackground)  # Enables transparen
 
 
 # Bio-data Entry Form
@@ -306,7 +303,7 @@ class BioDataApp(QWidget):
 
         main_layout = QVBoxLayout()
         main_layout.addLayout(form_layout)
-        main_layout.addWidget(submitButton, alignment=Qt.AlignCenter)
+        main_layout.addWidget(submitButton)
         self.setLayout(main_layout)
 
     # Function to get the access token from Google OAuth 2.0
@@ -384,7 +381,8 @@ class BioDataApp(QWidget):
             return
 
         dialog = ConfirmDialog(self, self.firstName.text(), self.middleName.text(), self.lastName.text(), age)
-        if dialog.exec_():
+        result = dialog.exec_()  # Execute the dialog and store the result
+        if result:  # Check the result
             self.submit_data()
 
     # Function writes data to Google Sheets
