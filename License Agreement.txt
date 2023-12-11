@@ -1,4 +1,4 @@
-Bio-Cap Software User License Agreement
+BIO-CAP USER LICENSE AGREEMENT
 
 This Software User License Agreement (the "Agreement") is a legal agreement between you (either an individual or a single entity) and Bio-Cap ("the Author") for the Bio-Cap software product, which includes computer software (the "Software"), and may include associated media, printed materials, and online or electronic documentation.
 
