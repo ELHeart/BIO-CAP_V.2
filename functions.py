@@ -14,7 +14,7 @@ import requests
 
 stylesheet = """
     QMainWindow, QWidget {
-        background-color: White; /* Main window background color */
+        background-color: white; /* Main window background color */
     }
     QPushButton {
         background-color: #333;
@@ -60,7 +60,7 @@ def is_internet_available(host="8.8.8.8", port=53, timeout=3):
 # Function to initialize the Google Sheets connection
 def init_google_sheets_api(sheet_name):
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-    creds_path = resource_path('bio-cap-c9841b6b39e2.json')  # Use resource_path for the JSON file
+    creds_path = resource_path('bio-cap-77071d617cb1.json')  # Use resource_path for the JSON file
     creds = ServiceAccountCredentials.from_json_keyfile_name(creds_path, scope)
     client = gspread.authorize(creds)
     sheet = client.open(sheet_name).sheet1

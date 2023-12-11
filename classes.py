@@ -98,6 +98,8 @@ class SignUpWidget(QWidget):
         # Successful data entry alert
         QMessageBox.information(self, "Success", "You have signed up successfully!")
         self.show()
+        self.username.clear()
+        self.password.clear()
 
 
 # Login Widget and form
@@ -161,28 +163,18 @@ class MainWindow(QMainWindow):
         self.setWindowTitle('BIOCAP')
         self.setWindowIcon(QIcon(resource_path('ICON.ico')))
 
-        # Initialize the widgets and frames
-        self.init_widgets()
-        self.init_ui()
+        # Create the menu bar
+        menu_bar = QMenuBar(self)
 
-    def init_widgets(self):
-        # Initialize the login and signup widgets
+        # Set the menu bar for the main window
+        self.setMenuBar(menu_bar)
 
-        # Initialize the frames for the login and signup widgets
-        self.login_frame.setLayout(QVBoxLayout())
-        self.login_frame.layout().addWidget(self.login_widget)
-
-        self.signup_frame.setLayout(QVBoxLayout())
-        self.signup_frame.layout().addWidget(self.signup_widget)
-
-    def init_ui(self):
-        # Create the menu bar with login and sign up actions
-        menu_bar = self.menuBar()
-        # Apply a stylesheet to the menu bar to change its color
+        # Set the style for the menu bar
         menu_bar.setStyleSheet("""
             QMenuBar {
-                background-color: #FFFEE; /* Menu bar background color */
+                background-color: dark; /* Menu bar background color */
                 color: black; /* Menu bar text color */
+                align: center
             }
             QMenuBar::item {
                 spacing: 3px; /* Spacing between menu items */
@@ -201,9 +193,27 @@ class MainWindow(QMainWindow):
         signup_action.triggered.connect(self.show_signup)
         login_action = QAction("Log In", self)
         login_action.triggered.connect(self.show_login)
+        exit_action = QAction("Exit", self)
+        exit_action.triggered.connect(self.close_window)
         menu_bar.addAction(signup_action)
         menu_bar.addAction(login_action)
+        menu_bar.addAction(exit_action)
 
+        # Initialize the widgets and frames
+        self.init_widgets()
+        self.init_ui()
+
+    def init_widgets(self):
+        # Initialize the login and signup widgets
+
+        # Initialize the frames for the login and signup widgets
+        self.login_frame.setLayout(QVBoxLayout())
+        self.login_frame.layout().addWidget(self.login_widget)
+
+        self.signup_frame.setLayout(QVBoxLayout())
+        self.signup_frame.layout().addWidget(self.signup_widget)
+
+    def init_ui(self):
         # Create the stacked widget and add the default widget, login frame, and signup frame
         default_layout = QVBoxLayout()
         self.default_image_label.setAlignment(Qt.AlignCenter)
@@ -309,7 +319,7 @@ class BioDataApp(QWidget):
     # Function to get the access token from Google OAuth 2.0
     def get_access_token(self):
         scope = ['https://www.googleapis.com/auth/drive.file']
-        creds_path = resource_path('bio-cap-c9841b6b39e2.json')  # Use resource_path for the JSON file
+        creds_path = resource_path('bio-cap-77071d617cb1.json')  # Use resource_path for the JSON file
         creds = ServiceAccountCredentials.from_json_keyfile_name(creds_path, scope)
         access_token_info = creds.get_access_token()
         return access_token_info.access_token
