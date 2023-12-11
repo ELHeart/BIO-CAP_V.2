@@ -6,7 +6,7 @@ from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import (Qt, QTimer, pyqtSignal)
 from oauth2client.service_account import ServiceAccountCredentials
 from classes import (SignUpWidget, BioDataApp, ConnectionErrorDialog, ConfirmDialog, LoginWidget, MainWindow,
-                     SplashScreen)
+                     SplashScreen,)
 from functions import (resource_path, is_internet_available, init_google_sheets_api, add_user, find_user,
                        encrypt_password, check_password, stylesheet)
 import gspread
@@ -43,9 +43,13 @@ if __name__ == '__main__':
 
     # Connect the login_successful signal to the show method of the BioDataApp instance
     Main_window.login_widget.login_successful.connect(bio_data_app.show)
-    # Also connect the login_successful signal to the close_window method of the WelcomeWindow
+    # Also connect the login_successful signal to the close_window method of the Welcome Window
     Main_window.login_widget.login_successful.connect(Main_window.close_window)
     # Connect the finished signal of the splash screen to the function that shows the main window
     splash.finished.connect(Main_window.show)
+    # Connect the logout signal to close the bio_data_app window
+    bio_data_app.log_out.connect(bio_data_app.close_data)
+    # Connect the logout signal to reopen the Main Window
+    bio_data_app.log_out.connect(Main_window.show)
 
     sys.exit(app.exec_())

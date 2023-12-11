@@ -142,7 +142,8 @@ class LoginWidget(QWidget):
             # Successful data entry alert
             QMessageBox.information(self, "Success", "You have logged in successfully!")
             self.login_successful.emit()  # Emit the signal when login is successful
-            self.hide()  # Hide the login widget
+            self.username.clear()
+            self.password.clear()
         else:
             QMessageBox.warning(self, "Login Failed", "Invalid username or password. Please try again.")
             self.username.clear()
@@ -160,7 +161,7 @@ class MainWindow(QMainWindow):
         self.signup_frame = QFrame()
         self.signup_widget = SignUpWidget()
         self.login_widget = LoginWidget()
-        self.setWindowTitle('BIOCAP')
+        self.setWindowTitle('SIGN UP or LOGIN')
         self.setWindowIcon(QIcon(resource_path('ICON.ico')))
 
         # Create the menu bar
@@ -274,6 +275,8 @@ class ConfirmDialog(QDialog):
 # Bio-data Entry Form
 # noinspection PyMethodMayBeStatic
 class BioDataApp(QWidget):
+    log_out = pyqtSignal()
+
     def __init__(self):
         super().__init__()
         self.uploaded_image_link = None
@@ -310,11 +313,21 @@ class BioDataApp(QWidget):
         # Submit button
         submitButton = QPushButton("Submit")
         submitButton.clicked.connect(self.confirm_dialog)
+        logoutButton = QPushButton("Logout")
+        logoutButton.clicked.connect(self.lg)
 
         main_layout = QVBoxLayout()
         main_layout.addLayout(form_layout)
         main_layout.addWidget(submitButton)
+        main_layout.addWidget(logoutButton)
         self.setLayout(main_layout)
+
+    def logout_dialog(self):
+        QMessageBox.warning(self, "Log Out", "Log out successful!")
+
+    def lg(self):
+        self.logout_dialog()
+        self.log_out.emit()  # Emit logout signal
 
     # Function to get the access token from Google OAuth 2.0
     def get_access_token(self):
@@ -394,6 +407,9 @@ class BioDataApp(QWidget):
         result = dialog.exec_()  # Execute the dialog and store the result
         if result:  # Check the result
             self.submit_data()
+
+    def close_data(self):
+        self.close()
 
     # Function writes data to Google Sheets
     def submit_data(self):
